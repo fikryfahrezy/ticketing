@@ -1,0 +1,5 @@
+services:
+  back-end:
+    build:
+      context: .
+    restart: unless-stopped

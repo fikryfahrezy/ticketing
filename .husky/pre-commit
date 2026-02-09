@@ -1,0 +1,5 @@
+npm --prefix back-end run type-check
+npm --prefix back-end exec lint-staged
+
+npm --prefix front-end run type-check
+npm --prefix front-end exec lint-staged
