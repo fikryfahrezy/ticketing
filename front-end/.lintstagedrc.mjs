@@ -2,7 +2,9 @@
  * @filename: .lintstagedrc.mjs
  * @type {import('lint-staged').Configuration}
  */
-export default {
+const config = {
   "*.{md,json,yaml}": ["prettier --write"],
   "*.{html,css,tsx,jsx}": ["eslint", "prettier --write"]
-}
+};
+
+export default config;

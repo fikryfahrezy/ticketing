@@ -11,8 +11,10 @@
     "prepare": "if [ \"$NODE_ENV\" != 'production' -a \"$CI\" != 'true' ]; then cd .. && husky; fi"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "1.2.4",
     "clsx": "2.1.1",
+    "lucide-react": "0.563.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
