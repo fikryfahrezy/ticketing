@@ -1,6 +1,6 @@
 import express from "express";
 import { apiKeyAuth } from "../auth.ts";
-import type { NewTicketInput, TicketUpdateInput } from "./types.ts";
+import type { NewTicketInput, Ticket, TicketResponse, TicketUpdateInput } from "./types.ts";
 import { triageWithAi } from "./triage-ai.ts";
 import * as ticketRepository from "./repository.ts";
 import { TicketUsecase } from "./usecase.ts";
@@ -10,6 +10,30 @@ import {
   ticketParamsSchema,
   ticketUpdateSchema,
 } from "./schemas.ts";
+
+function toTicketResponse(ticket: Ticket): TicketResponse {
+  return {
+    id: ticket.id,
+    subject: ticket.subject,
+    message: ticket.message,
+    requester_name: ticket.requesterName,
+    requester_email: ticket.requesterEmail,
+    status: ticket.status,
+    category: ticket.category,
+    sentiment_score: ticket.sentimentScore,
+    urgency: ticket.urgency,
+    draft_response: ticket.draftResponse,
+    error: ticket.error,
+    created_at: ticket.createdAt,
+    updated_at: ticket.updatedAt,
+    resolved_at: ticket.resolvedAt,
+  }
+}
+
+function toTicketsResponse(tickets: Ticket[]): TicketResponse[] {
+  return tickets.map(toTicketResponse);
+}
+
 
 const usecase = new TicketUsecase({
   repository: ticketRepository,
@@ -31,8 +55,8 @@ router.post(
             properties: {
               subject: { type: "string", example: "Payment failed" },
               message: { type: "string", example: "My card keeps getting declined." },
-              requesterName: { type: "string", example: "Ari" },
-              requesterEmail: { type: "string", example: "ari@example.com" }
+              requester_name: { type: "string", example: "Ari" },
+              requester_email: { type: "string", example: "ari@example.com" }
             }
           }
         }
@@ -47,12 +71,12 @@ router.post(
     const input: NewTicketInput = {
       subject: parsed.data.subject.trim(),
       message: parsed.data.message.trim(),
-      requesterName: parsed.data.requesterName?.trim() ?? null,
-      requesterEmail: parsed.data.requesterEmail?.trim() ?? null,
+      requesterName: parsed.data.requester_name?.trim() ?? null,
+      requesterEmail: parsed.data.requester_email?.trim() ?? null,
     };
 
     const ticket = await usecase.createTicketWithTriage(input);
-    return res.status(201).json(ticket);
+    return res.status(201).json(toTicketResponse(ticket));
   }
 );
 
@@ -68,7 +92,7 @@ router.get(
     }
 
     const tickets = await usecase.listAllTickets(parsedQuery.data.status);
-    res.json(tickets);
+    res.json(toTicketsResponse(tickets));
   }
 );
 
@@ -88,7 +112,7 @@ router.get(
       return res.status(404).json({ error: "Ticket not found" });
     }
 
-    return res.json(ticket);
+    return res.json(toTicketResponse(ticket));
   }
 );
 
@@ -104,7 +128,7 @@ router.patch(
           schema: {
             type: "object",
             properties: {
-              draftResponse: { type: "string", example: "Thanks for reaching out..." },
+              draft_response: { type: "string", example: "Thanks for reaching out..." },
               status: { type: "string", example: "RESOLVED" }
             }
           }
@@ -121,22 +145,21 @@ router.patch(
     if (!parsed.success) {
       return res.status(400).json({ error: "Invalid request body" });
     }
-
-    const update: TicketUpdateInput = {
-      draftResponse: parsed.data.draftResponse,
+    const input: TicketUpdateInput = {
+      draftResponse: parsed.data.draft_response,
       status: parsed.data.status,
     };
 
-    if (update.draftResponse === undefined && update.status === undefined) {
+    if (input.draftResponse === undefined && input.status === undefined) {
       return res.status(400).json({ error: "No valid fields to update" });
     }
 
-    const ticket = await usecase.updateTicket(parsedParams.data.id, update);
+    const ticket = await usecase.updateTicket(parsedParams.data.id, input);
     if (!ticket) {
       return res.status(404).json({ error: "Ticket not found" });
     }
 
-    return res.json(ticket);
+    return res.json(toTicketResponse(ticket));
   }
 );
 

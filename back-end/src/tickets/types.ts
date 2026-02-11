@@ -53,3 +53,20 @@ export type TicketUpdateInput = {
   draftResponse?: string;
   status?: "RESOLVED";
 };
+
+export type TicketResponse = {
+  id: string;
+  subject: string;
+  message: string;
+  requester_name: string | null;
+  requester_email: string | null;
+  status: TicketStatus;
+  category: TicketCategory | null;
+  sentiment_score: number | null;
+  urgency: TicketUrgency | null;
+  draft_response: string | null;
+  error: string | null;
+  created_at: Date;
+  updated_at: Date;
+  resolved_at: Date | null;
+};

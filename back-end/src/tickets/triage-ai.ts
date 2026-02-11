@@ -7,7 +7,7 @@ import {
   type TriageResult,
 } from "./types.ts";
 
-const getClient = (): OpenAI => {
+function getClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error("OPENAI_API_KEY not configured");
@@ -16,7 +16,7 @@ const getClient = (): OpenAI => {
   return new OpenAI({ apiKey });
 };
 
-const getModel = (): string => {
+function getModel(): string {
   return process.env.OPENAI_MODEL || "gpt-4o-mini";
 };
 
@@ -43,7 +43,7 @@ const triageResultSchema = z.object({
   draftResponse: z.string().min(1),
 });
 
-const parseTriageResult = (raw: string): TriageResult => {
+function parseTriageResult(raw: string): TriageResult {
   const parsed = triageResultSchema.parse(JSON.parse(raw));
 
   return {

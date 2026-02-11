@@ -44,9 +44,9 @@ export class TicketUsecase {
     });
   }
 
-  async triageTicket(ticketId: string): Promise<void> {
-    const ticket = await this.repository.getTicket(ticketId);
-    if (!ticket || ticket.status === TICKET_RESOLVED_STATUS) {
+  async triageTicket(ticketId: string): Promise < void> {
+      const ticket = await this.repository.getTicket(ticketId);
+      if(!ticket || ticket.status === TICKET_RESOLVED_STATUS) {
       return;
     }
 

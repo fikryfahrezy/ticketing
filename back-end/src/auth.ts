@@ -1,11 +1,11 @@
 import type { RequestHandler } from "express";
 
-const getApiKey = (): string | null => {
+function getApiKey(): string | null {
   const apiKey = process.env.API_KEY;
   return apiKey && apiKey.length > 0 ? apiKey : null;
 };
 
-const readApiKey = (headerValue: string | undefined): string => {
+function readApiKey(headerValue: string | undefined): string {
   if (!headerValue) {
     return "";
   }
@@ -13,7 +13,7 @@ const readApiKey = (headerValue: string | undefined): string => {
   return headerValue.trim();
 };
 
-export const apiKeyAuth = (): RequestHandler => {
+export function apiKeyAuth(): RequestHandler {
   return (req, res, next) => {
     const expectedKey = getApiKey();
     if (!expectedKey) {
