@@ -3,3 +3,6 @@ services:
     build:
       context: .
     restart: unless-stopped
+    env_file:
+      - path: ./.env
+        required: true

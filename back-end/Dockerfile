@@ -26,15 +26,24 @@ COPY . .
 ENV NODE_ENV=production
 # RUN bun test
 # RUN bun run build
+RUN bun run migrate:build
+RUN bun run swag:gen
 
 # copy production dependencies and source code into final image
 FROM base AS release
-COPY --from=install /temp/prod/node_modules node_modules
-COPY --from=prerelease /usr/src/app/src src
+COPY --from=install /temp/prod/node_modules ./node_modules
+COPY --from=prerelease /usr/src/app/dist ./dist
+COPY --from=prerelease /usr/src/app/migrations ./dist/migrations
+COPY --from=prerelease /usr/src/app/src ./src
 COPY --from=prerelease /usr/src/app/package.json .
-RUN ls -la .
 
 # run the app
 USER bun
-EXPOSE 3000/tcp
-ENTRYPOINT [ "bun", "run", "src/index.ts" ]
+
+ENV PORT=3000
+EXPOSE ${PORT}/tcp
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/docs || exit 1
+
+ENTRYPOINT ["sh", "-c", "bun run ./dist/migrate.mjs && bun run src/index.ts"]
