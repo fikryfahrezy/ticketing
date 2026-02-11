@@ -43,7 +43,4 @@ USER bun
 ENV PORT=3000
 EXPOSE ${PORT}/tcp
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/docs || exit 1
-
 ENTRYPOINT ["sh", "-c", "bun run ./dist/migrate.mjs && bun run src/index.ts"]
