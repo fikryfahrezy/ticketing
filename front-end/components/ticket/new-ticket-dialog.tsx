@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
-import { IngestionForm } from "@/components/ingestion-form";
+import { IngestionForm } from "@/components/ticket/ingestion-form";
 
 export function NewTicketDialog() {
   return (
@@ -26,9 +26,9 @@ export function NewTicketDialog() {
       </DialogTrigger>
       <DialogContent className="overflow-hidden border-0 bg-transparent p-0 shadow-none sm:max-w-lg">
         <Card className="flex h-full w-full flex-col overflow-hidden border-0 shadow-2xl">
-          <div className="flex flex-1 flex-col bg-white p-8">
+          <div className="bg-card flex flex-1 flex-col p-8">
             <div className="mb-6">
-              <DialogTitle className="text-secondary mb-2 text-2xl font-bold">
+              <DialogTitle className="text-card-foreground mb-2 text-2xl font-bold">
                 How can we help you?
               </DialogTitle>
               <DialogDescription className="text-muted-foreground text-sm">

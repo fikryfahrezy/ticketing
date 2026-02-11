@@ -1,6 +1,4 @@
-"use client";
-
-import { Ticket } from "@/lib/types";
+import { Ticket } from "@/lib/ticket.types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Clock } from "lucide-react";
@@ -12,20 +10,20 @@ type TicketListItemProps = {
 
 export function TicketListItem({ ticket, isSelected }: TicketListItemProps) {
   const getBorderColor = () => {
-    if (ticket.status === "resolved") {
+    if (ticket.status === "RESOLVED") {
       return "border-l-green-500";
+    }
+    if (ticket.status === "FAILED") {
+      return "border-l-red-500";
     }
     if (ticket.score?.urgency === "High") {
       return "border-l-red-500";
     }
-    if (ticket.score?.urgency === "Medium") {
-      return "border-l-yellow-500";
-    }
-    return "border-l-gray-300";
+    return "border-l-green-500";
   };
 
   const renderStatusBadge = (() => {
-    if (ticket.status === "pending") {
+    if (ticket.status === "PENDING") {
       return (
         <Badge
           variant="secondary"
@@ -36,10 +34,10 @@ export function TicketListItem({ ticket, isSelected }: TicketListItemProps) {
       );
     }
 
-    if (ticket.status === "processed") {
+    if (ticket.status === "TRIAGED") {
       return (
         <Badge
-          variant={ticket.score?.urgency === "High" ? "destructive" : "outline"}
+          variant={ticket.score?.urgency === "High" ? "destructive" : "success"}
           className="h-5 text-[10px]"
         >
           {ticket.score?.urgency} Urgency
@@ -47,7 +45,15 @@ export function TicketListItem({ ticket, isSelected }: TicketListItemProps) {
       );
     }
 
-    if (ticket.status === "resolved") {
+    if (ticket.status === "FAILED") {
+      return (
+        <Badge variant="destructive" className="h-5 text-[10px]">
+          Triage Failed
+        </Badge>
+      );
+    }
+
+    if (ticket.status === "RESOLVED") {
       return (
         <Badge
           variant="success"
@@ -83,7 +89,7 @@ export function TicketListItem({ ticket, isSelected }: TicketListItemProps) {
         </span>
       </div>
       <p className="text-foreground/80 mb-2 line-clamp-2 text-sm">
-        {ticket.content}
+        {ticket.message}
       </p>
       <div className="flex gap-2">
         {ticket.category && (

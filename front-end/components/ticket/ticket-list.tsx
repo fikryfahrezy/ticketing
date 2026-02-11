@@ -1,16 +1,13 @@
-"use client";
-
-import { useTickets } from "@/components/ticket-provider";
+import { Ticket } from "@/lib/ticket.types";
 import { TicketListItem } from "./ticket-list-item";
 import Link from "next/link";
 
 type TicketListProps = {
+  tickets: Ticket[];
   selectedId: string | null;
 };
 
-export function TicketList({ selectedId }: TicketListProps) {
-  const { tickets } = useTickets();
-
+export function TicketList({ tickets, selectedId }: TicketListProps) {
   const getUrgencyValue = (urgency?: string) => {
     switch (urgency) {
       case "High":

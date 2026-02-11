@@ -6,7 +6,7 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "default" | "outline" | "ghost" | "destructive" | "secondary";
 };
 
-function Button({
+export function Button({
   ref,
   className,
   variant = "default",
@@ -34,6 +34,3 @@ function Button({
     />
   );
 }
-Button.displayName = "Button";
-
-export { Button };
