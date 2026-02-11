@@ -2,8 +2,11 @@
   "name": "back-end",
   "module": "index.ts",
   "type": "module",
+  "engines": {
+    "bun": ">=1.2"
+  },
   "scripts": {
-    "start": "bun src/index.ts",
+    "dev": "bun src/index.ts",
     "lint": "eslint src",
     "migrate:build": "esbuild migrate.mjs --platform=node --bundle --format=esm --outfile=dist/migrate.mjs",
     "migrate:up": "bun --env-file=./.env run ./migrate.mjs",
