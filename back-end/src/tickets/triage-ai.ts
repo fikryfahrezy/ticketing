@@ -37,9 +37,9 @@ const triageJsonSchema = {
 } as const;
 
 const triageResultSchema = z.object({
-  category: z.enum([...TICKET_CATEGORIES]),
+  category: z.enum(TICKET_CATEGORIES),
   sentimentScore: z.number().int().min(1).max(10),
-  urgency: z.enum([...TICKET_URGENCIES]),
+  urgency: z.enum(TICKET_URGENCIES),
   draftResponse: z.string().min(1),
 });
 

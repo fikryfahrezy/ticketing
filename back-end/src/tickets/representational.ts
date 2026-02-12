@@ -1,4 +1,5 @@
 import express from "express";
+import { type ZodError, z } from "zod";
 import { apiKeyAuth } from "../auth.ts";
 import type { NewTicketInput, Ticket, TicketResponse, TicketUpdateInput } from "./types.ts";
 import { triageWithAi } from "./triage-ai.ts";
@@ -34,6 +35,15 @@ function toTicketsResponse(tickets: Ticket[]): TicketResponse[] {
   return tickets.map(toTicketResponse);
 }
 
+function validationErrorResponse(error: ZodError) {
+  const flattened = z.flattenError(error);
+  return {
+    error: "Validation failed",
+    fields: flattened.fieldErrors,
+    formErrors: flattened.formErrors,
+  };
+}
+
 
 const usecase = new TicketUsecase({
   repository: ticketRepository,
@@ -65,14 +75,14 @@ router.post(
   async (req, res) => {
     const parsed = ticketCreateSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid request body" });
+      return res.status(400).json(validationErrorResponse(parsed.error));
     }
 
     const input: NewTicketInput = {
       subject: parsed.data.subject.trim(),
       message: parsed.data.message.trim(),
-      requesterName: parsed.data.requester_name?.trim() ?? null,
-      requesterEmail: parsed.data.requester_email?.trim() ?? null,
+      requesterName: parsed.data.requester_name.trim(),
+      requesterEmail: parsed.data.requester_email.trim(),
     };
 
     const ticket = await usecase.createTicketWithTriage(input);
@@ -88,7 +98,7 @@ router.get(
   async (req, res) => {
     const parsedQuery = ticketListQuerySchema.safeParse(req.query);
     if (!parsedQuery.success) {
-      return res.status(400).json({ error: "Invalid status filter" });
+      return res.status(400).json(validationErrorResponse(parsedQuery.error));
     }
 
     const tickets = await usecase.listAllTickets(parsedQuery.data.status);
@@ -104,7 +114,7 @@ router.get(
   async (req, res) => {
     const parsedParams = ticketParamsSchema.safeParse(req.params);
     if (!parsedParams.success) {
-      return res.status(400).json({ error: "Ticket id is required" });
+      return res.status(400).json(validationErrorResponse(parsedParams.error));
     }
 
     const ticket = await usecase.findTicket(parsedParams.data.id);
@@ -138,21 +148,17 @@ router.patch(
   async (req, res) => {
     const parsedParams = ticketParamsSchema.safeParse(req.params);
     if (!parsedParams.success) {
-      return res.status(400).json({ error: "Ticket id is required" });
+      return res.status(400).json(validationErrorResponse(parsedParams.error));
     }
 
     const parsed = ticketUpdateSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid request body" });
+      return res.status(400).json(validationErrorResponse(parsed.error));
     }
     const input: TicketUpdateInput = {
       draftResponse: parsed.data.draft_response,
       status: parsed.data.status,
     };
-
-    if (input.draftResponse === undefined && input.status === undefined) {
-      return res.status(400).json({ error: "No valid fields to update" });
-    }
 
     const ticket = await usecase.updateTicket(parsedParams.data.id, input);
     if (!ticket) {

@@ -18,12 +18,12 @@ export type ApiTicket = {
 export type NewTicketRequest = {
   subject: string;
   message: string;
-  requester_name?: string | null;
-  requester_email?: string | null;
+  requester_name: string;
+  requester_email: string;
 };
 
 export type TicketUpdateRequest = {
-  draft_response?: string;
+  draft_response: string;
   status?: "RESOLVED";
 };
 

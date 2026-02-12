@@ -1,5 +1,5 @@
 import sql from "../db.ts";
-import { TICKET_FAILED_STATUS, TICKET_RESOLVED_STATUS, TICKET_TRIAGED_STATUS, type NewTicketInput, type Ticket, type TicketStatus, type TriageResult } from "./types.ts";
+import { TICKET_STATUS, type NewTicketInput, type Ticket, type TicketStatus, type TriageResult } from "./types.ts";
 
 const baseSelect = `
   SELECT
@@ -84,7 +84,7 @@ export const setTriageResult = async (
       sentiment_score = ${result.sentimentScore},
       urgency = ${result.urgency},
       draft_response = ${result.draftResponse},
-      status = ${TICKET_TRIAGED_STATUS},
+      status = ${TICKET_STATUS.TRIAGED},
       error = null,
       updated_at = now()
     WHERE id = ${id}
@@ -112,7 +112,7 @@ export const setTriageError = async (id: string, message: string): Promise<void>
   await sql`
     UPDATE tickets
     SET
-      status = ${TICKET_FAILED_STATUS},
+      status = ${TICKET_STATUS.FAILED},
       error = ${message},
       updated_at = now()
     WHERE id = ${id}
@@ -156,7 +156,7 @@ export const resolveTicket = async (
   const rows = await sql<Ticket[]>`
     UPDATE tickets
     SET
-      status = ${TICKET_RESOLVED_STATUS},
+      status = ${TICKET_STATUS.RESOLVED},
       draft_response = coalesce(${draftResponse ?? null}, draft_response),
       resolved_at = now(),
       updated_at = now()

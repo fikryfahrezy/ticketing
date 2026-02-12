@@ -10,7 +10,7 @@ export function TextArea({ ref, className, ...props }: TextAreaProps) {
     <textarea
       ref={ref}
       className={cn(
-        "focus:ring-primary text-accent-foreground w-full resize-none rounded-sm border border-gray-200 p-4 text-sm transition-all focus:border-transparent focus:ring-2 focus:outline-none",
+        "focus:ring-primary bg-background text-accent-foreground w-full resize-none rounded-sm border border-gray-200 p-4 text-sm transition-all focus:border-transparent focus:ring-2 focus:outline-none",
         className,
       )}
       {...props}

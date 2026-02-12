@@ -3,8 +3,12 @@
 import { updateTag } from 'next/cache'
 import { ApiTicket, NewTicketRequest, Ticket, TicketUpdateRequest } from "@/lib/ticket.types";
 import { mapUrgency, mapCategory } from '@/lib/ticket-mapping';
+import { ApiRequestError, parseApiRequestError } from "@/lib/api-request-error";
 
-const TICKET_TAG = "ticket";
+const TICKET_TAGS = {
+  list: "tickets",
+  detail: (id: string) => `ticket-${id}`,
+};
 
 function getApiUrl() {
   const apiUrl = process.env.API_URL;
@@ -50,7 +54,7 @@ export async function listTickets(): Promise<Ticket[]> {
       "x-api-key": getApiKey(),
     },
     cache: "no-store",
-    next: { tags: [TICKET_TAG] }
+    next: { tags: [TICKET_TAGS.list] }
   });
 
   if (!response.ok) {
@@ -67,7 +71,7 @@ export async function getTicket(id: string): Promise<Ticket | null> {
       "x-api-key": getApiKey(),
     },
     cache: "no-store",
-    next: { tags: [`${TICKET_TAG}-${id}`] }
+    next: { tags: [TICKET_TAGS.detail(id)] }
   });
 
   if (response.status === 404) {
@@ -93,11 +97,11 @@ export async function createTicket(body: NewTicketRequest): Promise<Ticket> {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to create ticket");
+    throw await parseApiRequestError(response, "Failed to create ticket");
   }
 
   const data = (await response.json()) as ApiTicket;
-  updateTag(TICKET_TAG);
+  updateTag(TICKET_TAGS.list);
   return normalizeTicket(data);
 };
 
@@ -116,43 +120,49 @@ export async function updateTicket(
   });
 
   if (!response.ok) {
-    throw new Error("Failed to update ticket");
+    throw await parseApiRequestError(response, "Failed to update ticket");
   }
 
   const data = (await response.json()) as ApiTicket;
-  updateTag(`${TICKET_TAG}-${id}`);
+  updateTag(TICKET_TAGS.list);
+  updateTag(TICKET_TAGS.detail(id));
   return normalizeTicket(data);
 };
 
-export type TicketCreateIdle = {
+export type TicketMutationIdle = {
   status: "idle"
 }
 
-export type TicketCreateSuccess = {
+export type TicketMutationSuccess = {
   status: "success"
+  formFields: Record<string, unknown>;
   ticket: Ticket;
 }
 
-export type TicketCreateError = {
+export type TicketMutationError = {
   status: "error";
+  formFields: Record<string, unknown>;
   error: string;
+  errorFields?: Record<string, string[] | undefined>;
+  formErrors?: string[];
 }
 
-export type TicketCreateState = TicketCreateIdle | TicketCreateSuccess | TicketCreateError;
+export type TicketCreateState = TicketMutationIdle | TicketMutationSuccess | TicketMutationError;
 
 export async function createTicketFrom(
   _: TicketCreateState,
   formData: FormData,
 ): Promise<TicketCreateState> {
-  const subject = formData.get("subject");
-  const messsage = formData.get("message");
-  const requesterName = formData.get("requester_name");
-  const requesterEmail = formData.get("requester_email");
+  const formFields = Object.fromEntries(formData.entries());
+  const subject = formFields.subject;
+  const messsage = formFields.message;
+  const requesterName = formFields.requester_name;
+  const requesterEmail = formFields.requester_email;
 
   const trimmedSubject = typeof subject === "string" ? subject.trim() : "";
   const trimmedMessage = typeof messsage === "string" ? messsage.trim() : "";
-  const trimmedRequesterName = typeof requesterName === "string" ? requesterName.trim() : null;
-  const trimmedRequesterEmail = typeof requesterEmail === "string" ? requesterEmail.trim() : null;
+  const trimmedRequesterName = typeof requesterName === "string" ? requesterName.trim() : "";
+  const trimmedRequesterEmail = typeof requesterEmail === "string" ? requesterEmail.trim() : "";
 
   try {
     const ticket = await createTicket({
@@ -162,14 +172,69 @@ export async function createTicketFrom(
       requester_email: trimmedRequesterEmail,
     });
     return {
+      formFields,
       status: "success",
       ticket,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to submit";
+    const message =
+      error instanceof Error ? error.message : "Failed to submit";
+
+    const errorFields =
+      error instanceof ApiRequestError ? error.fields : undefined;
+
+    const formErrors =
+      error instanceof ApiRequestError ? error.formErrors : undefined;
+
     return {
       status: "error",
       error: message,
+      formFields,
+      errorFields,
+      formErrors,
+    };
+  }
+};
+
+export type TicketUpdateState = TicketMutationIdle | TicketMutationSuccess | TicketMutationError;
+
+export async function updateTicketFrom(
+  ticketId: string,
+  _: TicketUpdateState,
+  formData: FormData,
+): Promise<TicketUpdateState> {
+  const formFields = Object.fromEntries(formData.entries());
+  const status = formFields.status as TicketUpdateRequest["status"];
+  const draftResponse = formFields.draft_response;
+
+  const trimmedDraftResponse = typeof draftResponse === "string" ? draftResponse.trim() : "";
+
+  try {
+    const ticket = await updateTicket(ticketId, {
+      status: status,
+      draft_response: trimmedDraftResponse,
+    });
+    return {
+      formFields,
+      status: "success",
+      ticket,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to submit";
+
+    const errorFields =
+      error instanceof ApiRequestError ? error.fields : undefined;
+
+    const formErrors =
+      error instanceof ApiRequestError ? error.formErrors : undefined;
+
+    return {
+      status: "error",
+      error: message,
+      formFields,
+      errorFields,
+      formErrors,
     };
   }
 };

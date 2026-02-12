@@ -1,16 +1,16 @@
 import z from "zod";
-import { TICKET_RESOLVED_STATUS, TICKET_STATUSES } from "./types.ts";
+import { TICKET_STATUS, TICKET_STATUSES } from "./types.ts";
 
 export const ticketCreateSchema = z.object({
   subject: z.string().min(1),
   message: z.string().min(1),
-  requester_name: z.string().min(1).optional(),
-  requester_email: z.string().email().optional(),
+  requester_name: z.string().min(1),
+  requester_email: z.string().email(),
 });
 
 export const ticketUpdateSchema = z.object({
-  draft_response: z.string().min(1).optional(),
-  status: z.literal(TICKET_RESOLVED_STATUS).optional(),
+  draft_response: z.string().min(1),
+  status: z.literal(TICKET_STATUS.RESOLVED).optional(),
 });
 
 const ticketStatusSchema = z.enum(TICKET_STATUSES);

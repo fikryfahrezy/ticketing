@@ -1,5 +1,5 @@
 import {
-  TICKET_RESOLVED_STATUS,
+  TICKET_STATUS,
   type NewTicketInput,
   type Ticket,
   type TicketStatus,
@@ -44,9 +44,9 @@ export class TicketUsecase {
     });
   }
 
-  async triageTicket(ticketId: string): Promise < void> {
-      const ticket = await this.repository.getTicket(ticketId);
-      if(!ticket || ticket.status === TICKET_RESOLVED_STATUS) {
+  async triageTicket(ticketId: string): Promise<void> {
+    const ticket = await this.repository.getTicket(ticketId);
+    if (!ticket || ticket.status === TICKET_STATUS.RESOLVED) {
       return;
     }
 
@@ -74,7 +74,16 @@ export class TicketUsecase {
   }
 
   async updateTicket(id: string, input: TicketUpdateInput): Promise<Ticket | null> {
-    if (input.status === TICKET_RESOLVED_STATUS) {
+    const existingTicket = await this.repository.getTicket(id);
+    if (!existingTicket) {
+      return null;
+    }
+
+    if (existingTicket.status !== TICKET_STATUS.PENDING && existingTicket.status !== TICKET_STATUS.TRIAGED) {
+      return existingTicket;
+    }
+
+    if (input.status === TICKET_STATUS.RESOLVED) {
       return this.repository.resolveTicket(id, input.draftResponse);
     }
 
@@ -82,6 +91,6 @@ export class TicketUsecase {
       return this.repository.updateDraftResponse(id, input.draftResponse);
     }
 
-    return this.repository.getTicket(id);
+    return existingTicket;
   }
 }

@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { toast } from "sonner";
 import {
   createTicketFrom,
   type TicketCreateState,
@@ -11,6 +13,7 @@ import {
 import { TextArea } from "../ui/textarea";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { ErrorMessage } from "../ui/error-message";
 
 const initialState: TicketCreateState = {
   status: "idle",
@@ -18,6 +21,21 @@ const initialState: TicketCreateState = {
 
 export function IngestionForm() {
   const [state, formAction] = useActionState(createTicketFrom, initialState);
+
+  const formFields = state.status === "error" ? state.formFields : undefined;
+  const errorFields = state.status === "error" ? state.errorFields : undefined;
+  const requesterNameErrors = errorFields?.requester_name ?? [];
+  const requesterEmailErrors = errorFields?.requester_email ?? [];
+  const subjectErrors = errorFields?.subject ?? [];
+  const messageErrors = errorFields?.message ?? [];
+
+  useEffect(() => {
+    if (state.status === "error") {
+      toast.error("Failed to submit ticket", {
+        description: state.error,
+      });
+    }
+  }, [state]);
 
   return (
     <>
@@ -45,40 +63,72 @@ export function IngestionForm() {
               Requester Name <span className="text-primary">*</span>
             </Label>
             <Input
-              placeholder="e.g. Jane Doe"
               name="requester_name"
+              defaultValue={String(formFields?.requester_name ?? "")}
+              placeholder="e.g. Jane Doe"
+              aria-invalid={requesterNameErrors.length > 0}
               required
-              className="bg-background"
             />
+            {requesterNameErrors.map((errorMessage, index) => {
+              return (
+                <ErrorMessage key={`requester-name-error-${index}`}>
+                  {errorMessage}
+                </ErrorMessage>
+              );
+            })}
             <Label>
               Requester Email <span className="text-primary">*</span>
             </Label>
             <Input
-              placeholder="e.g. jane.doe@example.com"
               name="requester_email"
+              defaultValue={String(formFields?.requester_email ?? "")}
+              placeholder="e.g. jane.doe@example.com"
               type="email"
+              aria-invalid={requesterEmailErrors.length > 0}
               required
-              className="bg-background"
             />
+            {requesterEmailErrors.map((errorMessage, index) => {
+              return (
+                <ErrorMessage key={`requester-email-error-${index}`}>
+                  {errorMessage}
+                </ErrorMessage>
+              );
+            })}
             <Label>
               Subject <span className="text-primary">*</span>
             </Label>
             <Input
-              placeholder="e.g. Issue with payment processing"
               name="subject"
+              defaultValue={String(formFields?.subject ?? "")}
+              placeholder="e.g. Issue with payment processing"
+              aria-invalid={subjectErrors.length > 0}
               required
-              className="bg-background"
             />
+            {subjectErrors.map((errorMessage, index) => {
+              return (
+                <ErrorMessage key={`subject-error-${index}`}>
+                  {errorMessage}
+                </ErrorMessage>
+              );
+            })}
             <Label>
               Description of Issue <span className="text-primary">*</span>
             </Label>
             <TextArea
+              name="message"
+              defaultValue={String(formFields?.message ?? "")}
               rows={5}
               placeholder="e.g. I am having trouble processing a payment for my subscription..."
-              name="message"
+              aria-invalid={messageErrors.length > 0}
               required
-              className="bg-background"
             />
+            {messageErrors.map((errorMessage, index) => {
+              return (
+                <ErrorMessage key={`message-error-${index}`}>
+                  {errorMessage}
+                </ErrorMessage>
+              );
+            })}
           </div>
           <SubmitButton />
           <p className="text-muted-foreground text-center text-xs">

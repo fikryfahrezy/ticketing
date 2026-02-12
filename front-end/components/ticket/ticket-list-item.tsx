@@ -1,6 +1,9 @@
+"use client";
+
 import { Ticket } from "@/lib/ticket.types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useTicketItem } from "@/hooks/use-ticket-item";
 import { CheckCircle2, Clock } from "lucide-react";
 
 type TicketListItemProps = {
@@ -9,21 +12,23 @@ type TicketListItemProps = {
 };
 
 export function TicketListItem({ ticket, isSelected }: TicketListItemProps) {
+  const liveTicket = useTicketItem(ticket);
+
   const getBorderColor = () => {
-    if (ticket.status === "RESOLVED") {
+    if (liveTicket.status === "RESOLVED") {
       return "border-l-green-500";
     }
-    if (ticket.status === "FAILED") {
+    if (liveTicket.status === "FAILED") {
       return "border-l-red-500";
     }
-    if (ticket.score?.urgency === "High") {
+    if (liveTicket.score?.urgency === "High") {
       return "border-l-red-500";
     }
-    return "border-l-green-500";
+    return "";
   };
 
   const renderStatusBadge = (() => {
-    if (ticket.status === "PENDING") {
+    if (liveTicket.status === "PENDING") {
       return (
         <Badge
           variant="secondary"
@@ -34,18 +39,20 @@ export function TicketListItem({ ticket, isSelected }: TicketListItemProps) {
       );
     }
 
-    if (ticket.status === "TRIAGED") {
+    if (liveTicket.status === "TRIAGED") {
       return (
         <Badge
-          variant={ticket.score?.urgency === "High" ? "destructive" : "success"}
+          variant={
+            liveTicket.score?.urgency === "High" ? "destructive" : "success"
+          }
           className="h-5 text-[10px]"
         >
-          {ticket.score?.urgency} Urgency
+          {liveTicket.score?.urgency} Urgency
         </Badge>
       );
     }
 
-    if (ticket.status === "FAILED") {
+    if (liveTicket.status === "FAILED") {
       return (
         <Badge variant="destructive" className="h-5 text-[10px]">
           Triage Failed
@@ -53,7 +60,7 @@ export function TicketListItem({ ticket, isSelected }: TicketListItemProps) {
       );
     }
 
-    if (ticket.status === "RESOLVED") {
+    if (liveTicket.status === "RESOLVED") {
       return (
         <Badge
           variant="success"
@@ -78,23 +85,25 @@ export function TicketListItem({ ticket, isSelected }: TicketListItemProps) {
     >
       <div className="mb-2 flex items-start justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold">#{ticket.id.slice(-4)}</span>
+          <span className="text-sm font-semibold">
+            #{liveTicket.id.slice(-4)}
+          </span>
           {renderStatusBadge}
         </div>
         <span className="text-muted-foreground text-xs">
-          {new Date(ticket.createdAt).toLocaleTimeString([], {
+          {new Date(liveTicket.createdAt).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           })}
         </span>
       </div>
       <p className="text-foreground/80 mb-2 line-clamp-2 text-sm">
-        {ticket.message}
+        {liveTicket.message}
       </p>
       <div className="flex gap-2">
-        {ticket.category && (
+        {liveTicket.category && (
           <Badge variant="secondary" className="text-[10px] opacity-80">
-            {ticket.category}
+            {liveTicket.category}
           </Badge>
         )}
       </div>
