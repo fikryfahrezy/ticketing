@@ -39,7 +39,7 @@ export function TicketList({ tickets, selectedId }: TicketListProps) {
         </div>
       )}
       {sortedTickets.map((ticket) => (
-        <Link key={ticket.id} href={`/?ticket=${ticket.id}`} className="block">
+        <Link key={ticket.id} href={`/${ticket.id}`} className="block">
           <TicketListItem
             ticket={ticket}
             isSelected={selectedId === ticket.id}
