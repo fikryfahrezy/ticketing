@@ -129,6 +129,23 @@ export async function updateTicket(
   return normalizeTicket(data);
 };
 
+export async function retryTicketTriage(id: string): Promise<void> {
+  const response = await fetch(`${getApiUrl()}/tickets/${id}/retry`, {
+    method: "POST",
+    headers: {
+      "x-api-key": getApiKey(),
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseApiRequestError(response, "Failed to retry triage");
+  }
+
+  updateTag(TICKET_TAGS.list);
+  updateTag(TICKET_TAGS.detail(id));
+};
+
 export type TicketMutationIdle = {
   status: "idle"
 }

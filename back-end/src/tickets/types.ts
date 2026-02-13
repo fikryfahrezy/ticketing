@@ -76,3 +76,8 @@ export type TicketResponse = {
   updated_at: Date;
   resolved_at: Date | null;
 };
+
+export type RetryFailedTriageResult = {
+  ticket: Ticket;
+  queued: boolean;
+};

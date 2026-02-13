@@ -1,6 +1,7 @@
 import {
   TICKET_STATUS,
   type NewTicketInput,
+  type RetryFailedTriageResult,
   type Ticket,
   type TicketStatus,
   type TicketUpdateInput,
@@ -13,6 +14,7 @@ export type TicketRepository = {
   listTickets: (status?: TicketStatus) => Promise<Ticket[]>;
   setTriageResult: (id: string, result: TriageResult) => Promise<Ticket | null>;
   setTriageError: (id: string, message: string) => Promise<void>;
+  setTicketPending: (id: string) => Promise<Ticket | null>;
   updateDraftResponse: (id: string, draftResponse: string) => Promise<Ticket | null>;
   resolveTicket: (id: string, draftResponse?: string) => Promise<Ticket | null>;
 };
@@ -24,6 +26,9 @@ export type TriageService = {
 export class TicketUsecase {
   private readonly repository: TicketRepository;
   private readonly triageService: TriageService;
+  private readonly triageQueue: string[] = [];
+  private readonly queuedTicketIds = new Set<string>();
+  private isQueueRunning = false;
 
   constructor(deps: { repository: TicketRepository; triageService: TriageService }) {
     this.repository = deps.repository;
@@ -37,11 +42,61 @@ export class TicketUsecase {
   }
 
   queueTriage(ticketId: string): void {
-    setImmediate(() => {
-      this.triageTicket(ticketId).catch((error) => {
-        console.error("Triage failed", error);
-      });
+    if (this.queuedTicketIds.has(ticketId)) {
+      return;
+    }
+
+    this.triageQueue.push(ticketId);
+    this.queuedTicketIds.add(ticketId);
+    this.runQueue().catch((error) => {
+      console.error("Triage queue failed", error);
     });
+  }
+
+  private async runQueue(): Promise<void> {
+    if (this.isQueueRunning) {
+      return;
+    }
+
+    this.isQueueRunning = true;
+    try {
+      while (this.triageQueue.length > 0) {
+        const ticketId = this.triageQueue.shift();
+        if (!ticketId) {
+          continue;
+        }
+
+        this.queuedTicketIds.delete(ticketId);
+        await this.triageTicket(ticketId);
+      }
+    } finally {
+      this.isQueueRunning = false;
+    }
+  }
+
+  async retryFailedTicketTriage(ticketId: string): Promise<RetryFailedTriageResult | null> {
+    const ticket = await this.repository.getTicket(ticketId);
+    if (!ticket) {
+      return null;
+    }
+
+    if (ticket.status !== TICKET_STATUS.FAILED) {
+      return {
+        ticket,
+        queued: false,
+      };
+    }
+
+    const pendingTicket = await this.repository.setTicketPending(ticketId);
+    if (!pendingTicket) {
+      return null;
+    }
+
+    this.queueTriage(ticketId);
+    return {
+      ticket: pendingTicket,
+      queued: true,
+    };
   }
 
   async triageTicket(ticketId: string): Promise<void> {

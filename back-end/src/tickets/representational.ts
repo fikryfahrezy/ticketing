@@ -1,7 +1,7 @@
 import express from "express";
 import { type ZodError, z } from "zod";
 import { apiKeyAuth } from "../middlewares/auth.ts";
-import type { NewTicketInput, Ticket, TicketResponse, TicketUpdateInput } from "./types.ts";
+import { type NewTicketInput, type Ticket, type TicketResponse, type TicketUpdateInput } from "./types.ts";
 import { triageWithAi } from "./triage-ai.ts";
 import * as ticketRepository from "./repository.ts";
 import { TicketUsecase } from "./usecase.ts";
@@ -123,6 +123,36 @@ router.get(
     }
 
     return res.json(toTicketResponse(ticket));
+  }
+);
+
+router.post(
+  "/:id/retry",
+  apiKeyAuth(),
+  /* #swagger.tags = ["Tickets"] */
+  /* #swagger.security = [{"apiKeyAuth": []}] */
+  async (req, res) => {
+    const parsedParams = ticketParamsSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      return res.status(400).json(validationErrorResponse(parsedParams.error));
+    }
+
+    const result = await usecase.retryFailedTicketTriage(parsedParams.data.id);
+    if (!result) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    if (!result.queued) {
+      return res.status(409).json({
+        error: "Only failed tickets can be retried",
+        status: result.ticket.status,
+      });
+    }
+
+    return res.status(202).json({
+      message: "Triage retry queued",
+      ticket: toTicketResponse(result.ticket),
+    });
   }
 );
 

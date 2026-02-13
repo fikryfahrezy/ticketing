@@ -119,6 +119,34 @@ export const setTriageError = async (id: string, message: string): Promise<void>
   `;
 };
 
+export const setTicketPending = async (id: string): Promise<Ticket | null> => {
+  const rows = await sql<Ticket[]>`
+    UPDATE tickets
+    SET
+      status = ${TICKET_STATUS.PENDING},
+      error = null,
+      updated_at = now()
+    WHERE id = ${id}
+    RETURNING
+      id,
+      subject,
+      message,
+      requester_name AS "requesterName",
+      requester_email AS "requesterEmail",
+      status,
+      category,
+      sentiment_score AS "sentimentScore",
+      urgency,
+      draft_response AS "draftResponse",
+      error,
+      created_at AS "createdAt",
+      updated_at AS "updatedAt",
+      resolved_at AS "resolvedAt"
+  `;
+
+  return rows[0] ?? null;
+};
+
 export const updateDraftResponse = async (
   id: string,
   draftResponse: string
