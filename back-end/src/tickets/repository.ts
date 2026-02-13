@@ -1,4 +1,4 @@
-import sql from "../db.ts";
+import sql from "../lib/db.ts";
 import { TICKET_STATUS, type NewTicketInput, type Ticket, type TicketStatus, type TriageResult } from "./types.ts";
 
 const baseSelect = `

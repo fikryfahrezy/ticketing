@@ -1,6 +1,6 @@
 import express from "express";
 import { type ZodError, z } from "zod";
-import { apiKeyAuth } from "../auth.ts";
+import { apiKeyAuth } from "../middlewares/auth.ts";
 import type { NewTicketInput, Ticket, TicketResponse, TicketUpdateInput } from "./types.ts";
 import { triageWithAi } from "./triage-ai.ts";
 import * as ticketRepository from "./repository.ts";
