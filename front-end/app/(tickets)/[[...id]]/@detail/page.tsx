@@ -14,7 +14,9 @@ export default async function TicketDetailPage({ params }: PageProps) {
   let selectedTicket: Ticket | null = null;
 
   try {
-    selectedTicket = await getTicket(selectedTicketId);
+    if (selectedTicketId) {
+      selectedTicket = await getTicket(selectedTicketId);
+    }
   } catch (error) {
     console.error("Failed to load tickets", error);
   }
