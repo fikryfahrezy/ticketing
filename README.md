@@ -40,3 +40,20 @@ bun install
 # cd front-end / back-end
 bun run dev
 ```
+
+#### Run using Docker
+
+From the root of the project, first create .env file that is similar to the above, and then run:
+
+```bash
+# cd front-end / back-end
+docker build -t <tag-name> .
+docker run --env-file ./.env <tag-name>
+```
+
+##### With Docker Compose
+
+```bash
+# cd front-end / back-end
+docker compose -f ./compose.yaml up --build
+```
