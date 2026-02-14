@@ -6,7 +6,7 @@
 
 ### Description
 
-AI Support Hub is a full-stack ticketing platform for customer support workflows. It combines a `Next.js` frontend with a `Bun` + `TypeScript` backend, including AI-assisted ticket triage, retry handling, and pending ticket updates via polling.
+AI Support Hub is a full-stack ticketing platform for customer support workflows. It combines a `Next.js` frontend with a `Express` + `TypeScript` backend, including AI-assisted ticket triage, retry handling, and pending ticket updates via polling.
 
 ### Prerequisites
 
