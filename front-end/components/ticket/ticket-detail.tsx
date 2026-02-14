@@ -18,9 +18,10 @@ import {
   TicketUpdateState,
   updateTicketFrom,
 } from "@/app/actions/tickets";
-import { useTicketItem } from "@/hooks/use-ticket-item";
+import { useTicketUpdate } from "@/hooks/use-ticket-update";
 import { TextArea } from "../ui/textarea";
 import { ErrorMessage } from "../ui/error-message";
+import { TicketStatus } from "./ticket-status";
 
 type TicketDetailProps = {
   ticket: Ticket | null;
@@ -54,16 +55,16 @@ const initialState: TicketUpdateState = {
 };
 
 export function TicketDetailContent({ ticket }: TicketDetailContentProps) {
-  const liveTicket = useTicketItem(ticket);
+  useTicketUpdate(ticket, "detail");
   const [isRetrying, setIsRetrying] = useState(false);
 
-  const isResolved = liveTicket.status === "RESOLVED";
-  const isPending = liveTicket.status === "PENDING";
-  const isFailed = liveTicket.status === "FAILED";
-  const hasAnalysis = Boolean(liveTicket.score && liveTicket.category);
+  const isResolved = ticket.status === "RESOLVED";
+  const isPending = ticket.status === "PENDING";
+  const isFailed = ticket.status === "FAILED";
+  const hasAnalysis = Boolean(ticket.score && ticket.category);
 
   const [state, formAction] = useActionState(
-    updateTicketFrom.bind(null, liveTicket.id),
+    updateTicketFrom.bind(null, ticket.id),
     initialState,
   );
 
@@ -87,7 +88,7 @@ export function TicketDetailContent({ ticket }: TicketDetailContentProps) {
   const handleRetry = async () => {
     setIsRetrying(true);
     try {
-      await retryTicketTriage(liveTicket.id);
+      await retryTicketTriage(ticket.id);
       toast.success("Retry queued", {
         description: "Ticket triage has been queued in the background.",
       });
@@ -114,20 +115,15 @@ export function TicketDetailContent({ ticket }: TicketDetailContentProps) {
                   <Badge variant="outline" className="flex items-center gap-1">
                     Score:{" "}
                     <span className="font-bold">
-                      {liveTicket.score?.sentiment}/10
+                      {ticket.score?.sentiment}/10
                     </span>{" "}
                     <Smile className="ml-1 h-3 w-3" />
                   </Badge>
-                  <Badge
-                    variant={
-                      liveTicket.score?.urgency === "High"
-                        ? "destructive"
-                        : "secondary"
-                    }
-                  >
-                    {liveTicket.score?.urgency} Urgency
-                  </Badge>
-                  <Badge variant="outline">{liveTicket.category}</Badge>
+                  <TicketStatus
+                    status={ticket.status}
+                    urgency={ticket.score?.urgency}
+                  />
+                  <Badge variant="outline">{ticket.category}</Badge>
                 </div>
               )}
             </div>
@@ -139,14 +135,14 @@ export function TicketDetailContent({ ticket }: TicketDetailContentProps) {
             <h4 className="text-muted-foreground mb-1 text-xs font-semibold uppercase">
               User Inquiry
             </h4>
-            <p className="text-sm whitespace-pre-wrap">{liveTicket.message}</p>
+            <p className="text-sm whitespace-pre-wrap">{ticket.message}</p>
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h4 className="text-muted-foreground flex items-center gap-1 text-xs font-semibold uppercase">
                 AI Draft Response
-                {liveTicket.status === "RESOLVED" && (
+                {ticket.status === "RESOLVED" && (
                   <span className="ml-2 text-green-600">(Resolved)</span>
                 )}
               </h4>
@@ -165,9 +161,9 @@ export function TicketDetailContent({ ticket }: TicketDetailContentProps) {
                   <p className="text-destructive text-sm font-semibold">
                     AI triage failed for this ticket.
                   </p>
-                  {liveTicket.error && (
+                  {ticket.error && (
                     <p className="text-muted-foreground text-xs">
-                      {liveTicket.error}
+                      {ticket.error}
                     </p>
                   )}
                 </div>
@@ -198,8 +194,7 @@ export function TicketDetailContent({ ticket }: TicketDetailContentProps) {
                   disabled={isResolved}
                   placeholder="e.g. Hello Jane, Thank you for reaching out..."
                   defaultValue={String(
-                    formFields?.draft_response ??
-                      (liveTicket.draftResponse || ""),
+                    formFields?.draft_response ?? (ticket.draftResponse || ""),
                   )}
                 />
                 {draftResponseErrors.map((errorMessage, index) => {
@@ -215,7 +210,7 @@ export function TicketDetailContent({ ticket }: TicketDetailContentProps) {
         </CardContent>
 
         <CardFooter className="flex justify-end gap-2 border-t pt-4">
-          {liveTicket.status !== "RESOLVED" && !isPending && (
+          {ticket.status !== "RESOLVED" && !isPending && (
             <>
               <Button variant="ghost" formAction={formAction}>
                 <Save className="mr-2 h-4 w-4" /> Save Draft
@@ -225,7 +220,7 @@ export function TicketDetailContent({ ticket }: TicketDetailContentProps) {
               </Button>
             </>
           )}
-          {liveTicket.status === "RESOLVED" && (
+          {ticket.status === "RESOLVED" && (
             <Button
               variant="outline"
               disabled

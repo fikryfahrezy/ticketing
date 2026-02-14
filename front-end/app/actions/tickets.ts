@@ -146,6 +146,35 @@ export async function retryTicketTriage(id: string): Promise<void> {
   updateTag(TICKET_TAGS.detail(id));
 };
 
+export type InvalidateTicketTagScope = "list" | "detail" | "both";
+
+export type InvalidateTicketTagsOptions = {
+  scope?: InvalidateTicketTagScope;
+  ticketId?: string;
+};
+
+export async function invalidateTicketTags(
+  options?: InvalidateTicketTagsOptions,
+): Promise<void> {
+  const scope = options?.scope ?? "both";
+  const ticketId = options?.ticketId;
+
+  if (scope === "list" || scope === "both") {
+    updateTag(TICKET_TAGS.list);
+  }
+
+  if (scope === "detail" || scope === "both") {
+    if (!ticketId) {
+      throw new Error("ticketId is required when invalidating detail tag");
+    }
+    updateTag(TICKET_TAGS.detail(ticketId));
+  }
+}
+
+export async function invalidateTicketList(): Promise<void> {
+  await invalidateTicketTags({ scope: "list" });
+}
+
 export type TicketMutationIdle = {
   status: "idle"
 }
