@@ -28,6 +28,9 @@ export class TicketUsecase {
   private readonly triageService: TriageService;
   private readonly triageQueue: string[] = [];
   private readonly queuedTicketIds = new Set<string>();
+  private readonly maxConcurrentTriage = 3;
+  private readonly inFlightTriages = new Set<Promise<void>>();
+  private hasStartedRecovery = false;
   private isQueueRunning = false;
 
   constructor(deps: { repository: TicketRepository; triageService: TriageService }) {
@@ -53,6 +56,24 @@ export class TicketUsecase {
     });
   }
 
+  startPendingTriageRecovery(): void {
+    if (this.hasStartedRecovery) {
+      return;
+    }
+
+    this.hasStartedRecovery = true;
+    this.recoverPendingTriages().catch((error) => {
+      console.error("Failed to recover pending triage queue", error);
+    });
+  }
+
+  private async recoverPendingTriages(): Promise<void> {
+    const pendingTickets = await this.repository.listTickets(TICKET_STATUS.PENDING);
+    for (const ticket of pendingTickets) {
+      this.queueTriage(ticket.id);
+    }
+  }
+
   private async runQueue(): Promise<void> {
     if (this.isQueueRunning) {
       return;
@@ -60,17 +81,38 @@ export class TicketUsecase {
 
     this.isQueueRunning = true;
     try {
-      while (this.triageQueue.length > 0) {
-        const ticketId = this.triageQueue.shift();
-        if (!ticketId) {
-          continue;
+      while (this.triageQueue.length > 0 || this.inFlightTriages.size > 0) {
+        while (this.triageQueue.length > 0 && this.inFlightTriages.size < this.maxConcurrentTriage) {
+          const ticketId = this.triageQueue.shift();
+          if (!ticketId) {
+            continue;
+          }
+
+          this.queuedTicketIds.delete(ticketId);
+
+          const triageTask = this.triageTicket(ticketId)
+            .catch((error) => {
+              console.error("Triage task failed", error);
+            })
+            .finally(() => {
+              this.inFlightTriages.delete(triageTask);
+            });
+
+          this.inFlightTriages.add(triageTask);
         }
 
-        this.queuedTicketIds.delete(ticketId);
-        await this.triageTicket(ticketId);
+        if (this.inFlightTriages.size > 0) {
+          await Promise.race(this.inFlightTriages);
+        }
       }
     } finally {
       this.isQueueRunning = false;
+
+      if (this.triageQueue.length > 0) {
+        this.runQueue().catch((error) => {
+          console.error("Triage queue failed", error);
+        });
+      }
     }
   }
 

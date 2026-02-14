@@ -49,6 +49,7 @@ const usecase = new TicketUsecase({
   repository: ticketRepository,
   triageService: { triage: triageWithAi },
 });
+usecase.startPendingTriageRecovery();
 
 const router = express.Router();
 
