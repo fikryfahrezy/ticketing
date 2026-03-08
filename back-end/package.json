@@ -11,8 +11,7 @@
     "migrate:build": "esbuild migrate.mjs --platform=node --bundle --format=esm --outfile=dist/migrate.mjs",
     "migrate:up": "bun --env-file=./.env run ./migrate.mjs",
     "swag:gen": "bun run swagger.mjs",
-    "type-check": "tsc --noEmit",
-    "prepare": "if [ \"$NODE_ENV\" != 'production' -a \"$CI\" != 'true' ]; then cd .. && husky; fi"
+    "type-check": "tsc --noEmit"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -20,8 +19,6 @@
     "@types/swagger-ui-express": "4.1.8",
     "esbuild": "0.27.3",
     "eslint": "10.0.0",
-    "husky": "9.1.7",
-    "lint-staged": "16.2.7",
     "postgres-shift": "0.1.0",
     "prettier": "3.8.1",
     "swagger-autogen": "2.23.7",

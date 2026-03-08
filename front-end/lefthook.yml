@@ -1,0 +1,19 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - run: npm exec prettier --write {staged_files}
+      root: "front-end/"
+      glob:
+        - "*.md"
+        - "*.json"
+        - "*.yaml"
+      stage_fixed: true
+
+    - run: npm exec eslint {staged_files} && npm exec prettier --write {staged_files}
+      root: "front-end/"
+      glob:
+        - "*.html"
+        - "*.css"
+        - "*.tsx"
+        - "*.jsx"
+      stage_fixed: true
