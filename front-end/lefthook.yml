@@ -10,7 +10,6 @@ pre-commit:
       run: bun run prettier --write {staged_files}
 
     - root: "front-end/"
-      stage_fixed: true
       glob:
         - "*.html"
         - "*.css"
@@ -23,3 +22,4 @@ pre-commit:
         jobs:
           - run: bun run eslint {staged_files}
           - run: bun run prettier --write {staged_files}
+            stage_fixed: true
