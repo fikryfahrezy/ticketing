@@ -7,7 +7,7 @@ pre-commit:
         - "*.md"
         - "*.json"
         - "*.yaml"
-      run: npm exec prettier --write {staged_files}
+      run: bun run prettier --write {staged_files}
 
     - root: "front-end/"
       stage_fixed: true
@@ -19,5 +19,5 @@ pre-commit:
       group:
         piped: true
         jobs:
-          - run: npx eslint {staged_files}
-          - run: npx prettier --write {staged_files}
+          - run: bun run eslint {staged_files}
+          - run: bun run prettier --write {staged_files}
