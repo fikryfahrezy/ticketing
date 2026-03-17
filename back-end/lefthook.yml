@@ -14,8 +14,8 @@ pre-commit:
       glob:
         - "*.html"
         - "*.css"
-        - "*.tsx"
-        - "*.jsx"
+        - "*.ts"
+        - "*.js"
       group:
         piped: true
         jobs:
