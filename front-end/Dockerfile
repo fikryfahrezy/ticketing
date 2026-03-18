@@ -45,4 +45,7 @@ USER nextjs
 ENV PORT=3000
 EXPOSE ${PORT}
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:${PORT} || exit 1
+
 CMD ["bun", "./server.js"]
