@@ -22,6 +22,12 @@ RUN bun run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
+
+# Install ca-certificates and curl for health checks
+RUN apt-get update && \
+    apt-get install -y ca-certificates curl tzdata && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
